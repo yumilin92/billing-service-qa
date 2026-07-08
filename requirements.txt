@@ -1,0 +1,4 @@
+# Runtime dependencies (what the service itself needs to run).
+fastapi>=0.110
+uvicorn[standard]>=0.27
+sqlalchemy>=2.0

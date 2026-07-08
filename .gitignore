@@ -1,0 +1,22 @@
+# Python virtual environment (never commit this — it's big and machine-specific)
+.venv/
+
+# Python bytecode caches
+__pycache__/
+*.pyc
+
+# Local SQLite database (generated at runtime)
+*.db
+
+# Test / coverage artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Playwright (Phase 3)
+node_modules/
+test-results/
+playwright-report/
+
+# OS noise
+.DS_Store
