@@ -1,6 +1,10 @@
 # billing-service-qa
 
+[![CI](https://github.com/yumilin92/billing-service-qa/actions/workflows/ci.yml/badge.svg)](https://github.com/yumilin92/billing-service-qa/actions/workflows/ci.yml)
+
 A small **B2B deferred-payment (invoice) service** plus the **automated test suite and CI** around it — built as a focused demonstration of **QA / SDET** engineering.
+
+**→ See [docs/QA-STRATEGY.md](docs/QA-STRATEGY.md) for how (and why) it's tested.**
 
 The domain mirrors a B2B "buy now, pay later" / invoice-guarantee product (a buyer has a credit limit; invoices are credit-screened, then paid or go overdue). The point of the project is not the service itself — it's **how it is tested**.
 
@@ -49,15 +53,30 @@ Python · FastAPI · SQLAlchemy 2.0 · SQLite · pytest · Playwright · GitHub 
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements-dev.txt
-uvicorn app.main:app --reload          # http://127.0.0.1:8000/docs
+python -m playwright install chromium     # once, for the E2E tests
+uvicorn app.main:app --reload             # http://127.0.0.1:8000/docs
 ```
 
-Interactive API docs are auto-generated at `/docs`.
+Interactive API docs are auto-generated at `/docs`; a tiny demo UI at `/`.
+
+## Running the tests
+
+```bash
+pytest                                   # whole suite
+pytest tests/unit                        # fast pure-logic tests
+pytest tests/api                         # HTTP/integration tests
+pytest tests/e2e                         # Playwright browser tests
+pytest --cov=app --cov-report=term-missing   # with coverage (~96%)
+ruff check .                             # lint
+
+# load smoke (server must be running):
+locust -f tests/load/locustfile.py --host http://127.0.0.1:8000 --headless -u 20 -r 5 -t 15s
+```
 
 ## Roadmap
 
 - [x] **Phase 1** — Billing service (buyers, credit-screened invoices, payments, credit summary)
-- [ ] **Phase 2** — Test pyramid: unit tests (domain) + API tests (happy / negative / edge)
-- [ ] **Phase 3** — End-to-end tests with Playwright
-- [ ] **Phase 4** — CI on GitHub Actions (lint + tests + coverage badge)
-- [ ] **Phase 5** — Load-test smoke (Locust) + written QA strategy notes
+- [x] **Phase 2** — Test pyramid: unit tests (domain) + API tests (happy / negative / edge)
+- [x] **Phase 3** — End-to-end tests with Playwright
+- [x] **Phase 4** — CI on GitHub Actions (lint + tests + coverage gate)
+- [x] **Phase 5** — Load-test smoke (Locust) + written QA strategy notes

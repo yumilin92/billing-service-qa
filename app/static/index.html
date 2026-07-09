@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Billing Service — demo UI</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 640px; margin: 40px auto; padding: 0 20px; color: #111; }
+  h1 { font-size: 20px; }
+  section { border: 1px solid #e5e5e5; border-radius: 10px; padding: 20px; margin: 16px 0; }
+  label { display: block; font-size: 13px; margin: 10px 0 4px; }
+  input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+  button { margin-top: 14px; padding: 10px 18px; border: 0; border-radius: 6px; background: #111; color: #fff; cursor: pointer; }
+  .result { margin-top: 12px; font-size: 14px; min-height: 20px; }
+  .error { color: #b00020; }
+  .ok { color: #0a7d29; }
+</style>
+</head>
+<body>
+  <h1>Billing Service — demo</h1>
+
+  <section>
+    <h2>1. Create buyer</h2>
+    <label for="buyer-name">Name</label>
+    <input id="buyer-name" value="Acme K.K.">
+    <label for="buyer-limit">Credit limit (yen)</label>
+    <input id="buyer-limit" type="number" value="100000">
+    <button id="buyer-submit">Create buyer</button>
+    <div id="buyer-result" class="result"></div>
+  </section>
+
+  <section>
+    <h2>2. Create invoice</h2>
+    <label for="invoice-buyer">Buyer ID</label>
+    <input id="invoice-buyer" type="number" placeholder="create a buyer first">
+    <label for="invoice-amount">Amount (yen)</label>
+    <input id="invoice-amount" type="number" value="60000">
+    <button id="invoice-submit">Create invoice</button>
+    <div id="invoice-result" class="result"></div>
+  </section>
+
+<script>
+  // A due date 30 days from now, in YYYY-MM-DD.
+  function dueDate() {
+    const d = new Date();
+    d.setDate(d.getDate() + 30);
+    return d.toISOString().slice(0, 10);
+  }
+
+  document.getElementById("buyer-submit").addEventListener("click", async () => {
+    const out = document.getElementById("buyer-result");
+    const res = await fetch("/buyers", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: document.getElementById("buyer-name").value,
+        credit_limit: Number(document.getElementById("buyer-limit").value),
+      }),
+    });
+    const data = await res.json();
+    if (res.status === 201) {
+      out.className = "result ok";
+      out.textContent = `Buyer #${data.id} created (limit ${data.credit_limit})`;
+      // Convenience: pre-fill the invoice form with this buyer's id.
+      document.getElementById("invoice-buyer").value = data.id;
+    } else {
+      out.className = "result error";
+      out.textContent = "Error creating buyer";
+    }
+  });
+
+  document.getElementById("invoice-submit").addEventListener("click", async () => {
+    const out = document.getElementById("invoice-result");
+    const res = await fetch("/invoices", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        buyer_id: Number(document.getElementById("invoice-buyer").value),
+        amount: Number(document.getElementById("invoice-amount").value),
+        due_date: dueDate(),
+      }),
+    });
+    const data = await res.json();
+    if (res.status === 201) {
+      out.className = "result ok";
+      out.textContent = `Invoice #${data.id} — ${data.status} (amount ${data.amount})`;
+    } else {
+      out.className = "result error";
+      // The API returns {detail: "..."} for our business errors.
+      out.textContent = typeof data.detail === "string" ? data.detail : "Error creating invoice";
+    }
+  });
+</script>
+</body>
+</html>

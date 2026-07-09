@@ -11,13 +11,17 @@ Thin routes are easy to read and easy to integration-test (Phase 2).
 from __future__ import annotations
 
 from datetime import date, datetime, timezone
+from pathlib import Path
 
 from fastapi import Depends, FastAPI, HTTPException
+from fastapi.responses import FileResponse
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from . import domain, models
 from .database import Base, engine, get_db
+
+STATIC_DIR = Path(__file__).parent / "static"
 
 # Create the tables if they don't exist yet. Fine for a demo; a production
 # app would use migrations (e.g. Alembic) instead of create_all.
@@ -45,6 +49,12 @@ def _outstanding(db: Session, buyer_id: int) -> int:
         )
     ).all()
     return sum(inv.amount for inv in unpaid)
+
+
+@app.get("/", include_in_schema=False)
+def index():
+    """Serve the tiny demo UI (used by the Playwright end-to-end tests)."""
+    return FileResponse(STATIC_DIR / "index.html")
 
 
 @app.get("/health")
